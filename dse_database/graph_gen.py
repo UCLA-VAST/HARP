@@ -18,6 +18,7 @@ from shutil import copy
 from glob import glob, iglob
 import csv
 import re
+import programl
 
 from utils import create_dir_if_not_exists, get_root_path, natural_keys
 
@@ -130,6 +131,25 @@ def read_json_graph(name, readable=True):
     g_nx=nx.readwrite.json_graph.node_link_graph(js_graph)
     if readable:
         make_json_readable(name, js_graph)
+    
+    return g_nx
+
+
+def llvm_to_nx(name):
+    '''
+        reads a LLVM IR and converts it to a netwrokx graph
+        
+        args:
+            name: name of the LLVM file/ kernel's name
+            
+        returns:
+            g_nx: graph in networkx format
+    '''
+    filename = name + '.ll'
+    with open(filename) as f:
+        ll_file = f.read()
+        G=programl.from_llvm_ir(ll_file)
+        g_nx=programl.to_networkx(G)
     
     return g_nx
 
@@ -370,7 +390,7 @@ def prune_redundant_nodes(g_new):
         if not remove_nodes:
             break
 
-def process_graph(name, g):
+def process_graph(name, g, csv_dict=None):
     '''
         adjusts the node/edge attributes, removes redundant nodes, 
             and writes the final graph to be used by GNN-DSE
@@ -401,13 +421,20 @@ def process_graph(name, g):
     prune_redundant_nodes(g_new)
 
     new_gexf_file = join(processed_gexf_folder, f'{name}_processed_result.gexf')
-    print('#nodes:', len(g_new.nodes), 'previously was:', len(g.nodes))
-    print('#edges:', len(g_new.edges), 'previously was:', len(g.edges))
+    if len(g_new.nodes) != len(g.nodes):
+        print('#nodes:', len(g_new.nodes), 'before processing was:', len(g.nodes))
+    if len(g_new.edges) != len(g.edges):
+        print('#edges:', len(g_new.edges), 'before processing was:', len(g.edges))
     nx.write_gexf(g_new, new_gexf_file)
+    current_g_value = {}
+    current_g_value['num_node'] = len(g_new.nodes)
+    current_g_value['num_edge'] = len(g_new.edges)
+    current_g_value['name'] = name
+    if csv_dict: csv_dict[name] = current_g_value
 
 
 
-def graph_generator(name, path, benchmark, generate_programl = False):
+def graph_generator(name, path, benchmark, generate_programl = False, csv_dict=None):
     """
         runs ProGraML [ICML'21] to generate the graph, adds the pragma nodes,
             processes the final graph to be accepted by GNN-DSE
@@ -423,7 +450,8 @@ def graph_generator(name, path, benchmark, generate_programl = False):
         p.wait()
         
     ## convert it to networkx format
-    g_nx = read_json_graph(join(path, name))
+    # g_nx = read_json_graph(join(path, name))
+    g_nx = llvm_to_nx(join(path, name))
     g_nx_nodes, g_nx_edges = g_nx.number_of_nodes(), len(g_nx.edges)
     
     ## find for loops and icmp instructions in llvm code
@@ -447,7 +475,7 @@ def graph_generator(name, path, benchmark, generate_programl = False):
         print(f'number of new nodes: {g_nx.number_of_nodes()} and number of new edges: {len(g_nx.edges)}')
         process = True
         if process:
-            process_graph(name, g_nx)
+            process_graph(name, g_nx, csv_dict)
 
     copy_files_ = True
     if generate_programl: copy_files = True
@@ -708,12 +736,18 @@ def write_csv_file(csv_dict, csv_header, file_path):
         f_writer = csv.DictWriter(f, fieldnames=csv_header)
         f_writer.writeheader()
         for d, value in csv_dict.items():
+            if d == 'header':
+                continue
             f_writer.writerow(value)
 
 
 def run_graph_gen(mode='initial', connected=True, target=['machsuite', 'poly'], ALL_KERNEL=ALL_KERNEL):
     test = 'original'
     global processed_gexf_folder
+    if mode == 'initial': csv_header = ['name', 'num_node', 'num_edge']
+    else: csv_header = ['name', 'prev_node', 'prev_edge', 'new_node', 'new_edge']
+    if mode == 'auxiliary': csv_header.append('block')
+    csv_dict = {'header': csv_header}
     if mode == 'initial':
         for BENCHMARK in target:
             processed_gexf_folder = join(get_root_path(), f'{type_graph}/{BENCHMARK}/processed/')
@@ -738,30 +772,25 @@ def run_graph_gen(mode='initial', connected=True, target=['machsuite', 'poly'], 
                     print(kernel_path)
                     print(new_file_path)
                     shutil.copyfile(kernel_path, new_file_path)
-                graph_generator(kernel, path, BENCHMARK, generate_programl = True)
+                graph_generator(kernel, path, BENCHMARK, generate_programl = True, csv_dict=csv_dict)
                 print()
+        write_csv_file(csv_dict, csv_header, f'{type_graph}/{mode}.csv')
     elif mode == 'auxiliary':
-        csv_header = ['name', 'prev_node', 'prev_edge', 'new_node', 'new_edge', 'block']
-        csv_dict = {}
-        if test == 'simple': target = ['simple']
         for BENCHMARK in target:
-            if BENCHMARK != 'simple':
-                processed_gexf_folder = join(get_root_path(), f'{type_graph}/{BENCHMARK}/processed')
-                if connected:
-                    auxiliary_node_gexf_folder = join(get_root_path(), f'{type_graph}/{BENCHMARK}/processed/extended-pseudo-block-connected/')
-                else:
-                    auxiliary_node_gexf_folder = join(get_root_path(), f'{type_graph}/{BENCHMARK}/processed/extended-pseudo-block-base/')
-                create_dir_if_not_exists(auxiliary_node_gexf_folder)
-                all_kernel = ALL_KERNEL[BENCHMARK]
+            processed_gexf_folder = join(get_root_path(), f'{type_graph}/{BENCHMARK}/processed')
+            if connected:
+                auxiliary_node_gexf_folder = join(get_root_path(), f'{type_graph}/{BENCHMARK}/processed/extended-pseudo-block-connected/')
+            else:
+                auxiliary_node_gexf_folder = join(get_root_path(), f'{type_graph}/{BENCHMARK}/processed/extended-pseudo-block-base/')
+            create_dir_if_not_exists(auxiliary_node_gexf_folder)
+            all_kernel = ALL_KERNEL[BENCHMARK]
             for kernel in all_kernel:
                 print('####################')
                 print('now processing', kernel)
                 add_auxiliary_nodes(kernel, processed_gexf_folder, auxiliary_node_gexf_folder, csv_dict=csv_dict, node_type = 'block', connected = connected)
                 print()
-        write_csv_file(csv_dict, csv_header, f'{type_graph}/{test}-block-info-connected-{connected}.csv')
+        write_csv_file(csv_dict, csv_header, f'{type_graph}/{mode}_{connected}.csv')
     elif mode == 'hierarchy':
-        csv_dict = {}
-        csv_header = ['name', 'prev_node', 'prev_edge', 'new_node', 'new_edge']
         for BENCHMARK in target:
             llvm_base_folder = join(get_root_path(), f'{type_graph}/{BENCHMARK}/')
             auxiliary_node_gexf_folder = join(get_root_path(), f'{type_graph}/{BENCHMARK}/processed/extended-pseudo-block-connected/')
@@ -772,8 +801,9 @@ def run_graph_gen(mode='initial', connected=True, target=['machsuite', 'poly'], 
                 print('####################')
                 print('now processing', kernel)
                 for_blocks_info = get_for_blocks_info(kernel, llvm_base_folder)
-                augment_graph_hierarchy(kernel, for_blocks_info, src_path = auxiliary_node_gexf_folder, dst_path = dest_path)
+                augment_graph_hierarchy(kernel, for_blocks_info, src_path = auxiliary_node_gexf_folder, dst_path = dest_path, csv_dict=csv_dict)
                 print()
+        write_csv_file(csv_dict, csv_header, f'{type_graph}/{mode}.csv')
     else:
         raise NotImplementedError()
 
