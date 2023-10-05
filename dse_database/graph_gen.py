@@ -446,7 +446,7 @@ def graph_generator(name, path, benchmark, generate_programl = False, csv_dict=N
     """
     ## generate PrograML graph
     if generate_programl:
-        p = Popen(f"{get_root_path()}/programl_script.sh {name} {path} {type_graph}", shell = True, stdout = PIPE)
+        p = Popen(f"{get_root_path()}/clang_script.sh {name} {path} {type_graph}", shell = True, stdout = PIPE)
         p.wait()
         
     ## convert it to networkx format
