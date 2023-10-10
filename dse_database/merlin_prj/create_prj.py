@@ -4,7 +4,7 @@ import os
 import shutil
 from tempfile import mkstemp
 
-MACHSUITE_KERNEL = ['aes', 'gemm-blocked', 'gemm-ncubed', 'spmv-crs', 'spmv-ellpack', 'stencil',
+MACHSUITE_KERNEL = ['aes', 'gemm-blocked', 'gemm-ncubed', 'spmv-crs', 'spmv-ellpack', 'stencil_stencil2d',
                     'nw', 'md', 'stencil-3d']
 
 poly_KERNEL = ['2mm', '3mm', 'adi', 'atax', 'bicg', 'bicg-large', 'covariance', 'doitgen', 
@@ -35,7 +35,7 @@ def modify_makefile_mcc_common(orig_file):
         with open(orig_file) as f:
             for line in f:
                 if 'MCC_COMMON_DIR=' in line:
-                    fpnew.write(line.replace(line.strip().split('=')[-1], '../../mcc_common'))
+                    fpnew.write(line.replace(line.strip().split('=')[-1], f'{dirname(abspath(__file__))}/mcc_common'))
                 else:
                     fpnew.write(line)
     
@@ -52,7 +52,8 @@ def modify_makefile_kernel_name(orig_file, kernel_name):
         with open(orig_file) as f:
             for line in f:
                 if 'KERNEL_SRC_FILES=' in line:
-                    fpnew.write(line.replace(line.strip().split('=')[-1], f'./xilinx_dse/{kernel_name}.c'))
+                    print('here', line.replace(line.strip().split('=')[-1], f'./{kernel_name}/{kernel_name}.c'))
+                    fpnew.write(line.replace(line.strip().split('=')[-1], f'./{kernel_name}/{kernel_name}.c'))
                 else:
                     fpnew.write(line)
     
@@ -80,6 +81,7 @@ def remove_include_file(orig_file):
     
 def create_merlin_prj(benchmark, kernel_name):
     dst = join(get_local_project_dir(), kernel_name)
+    shutil.rmtree(dst)
     kernel_path = join('../', benchmark, 'sources', f'{kernel_name}_kernel.c')
     remove_include_file(kernel_path)
     ds_info_path = join('../', benchmark, 'config', f'{kernel_name}_ds_config.json')
@@ -92,6 +94,12 @@ def create_merlin_prj(benchmark, kernel_name):
     shutil.copy(makefile_path, makefile_dir)
     modify_makefile_mcc_common(join(makefile_dir, 'Makefile'))
     modify_makefile_kernel_name(join(makefile_dir, 'Makefile'), kernel_name)
+
+
+def modify_merlin_prj(benchmark, kernel_name):
+    dst = join(get_local_project_dir(), kernel_name)
+    makefile_dir = join(dst, 'xilinx_dse')
+    modify_makefile_mcc_common(join(makefile_dir, 'Makefile'))
 
 
 # for dir_ in os.walk(get_cur_dir()):

@@ -24,12 +24,12 @@ endif
 
 # Accelerated Kernel settings
 KERNEL_NAME=gemm
-KERNEL_SRC_FILES=./xilinx_dse/correlation.c
+KERNEL_SRC_FILES=./correlation/correlation.c
 KERNEL_INC_DIR=$(CXX_INC_DIRS)
 
 # MerlinCC Options
 CMP_OPT=-d11
 LNK_OPT=-d11
 
-MCC_COMMON_DIR=../../mcc_common
+MCC_COMMON_DIR=/home/atefehSZ/HARP/dse_database/merlin_prj/mcc_common
 include $(MCC_COMMON_DIR)/mcc_common.mk
