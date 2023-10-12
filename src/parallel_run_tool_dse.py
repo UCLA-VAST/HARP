@@ -213,7 +213,7 @@ if __name__ == '__main__':
 
     found_db = False
     if args.version == 'v18' or args.version == 'v20':
-        f_db_list = [f for f in iglob(db_p, recursive=True) if f.endswith('.db') and f'{args.kernel}_' in f args.version in f]
+        f_db_list = [f for f in iglob(db_p, recursive=True) if f.endswith('.db') and f'{args.kernel}_' in f and args.version in f]
     else:
         raise NotImplementedError()
     if len(f_db_list) == 1:
