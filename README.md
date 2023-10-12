@@ -1,4 +1,4 @@
-# GNN-DSE
+# HARP
 
 ## Publication
 
