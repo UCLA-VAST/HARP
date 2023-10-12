@@ -1,4 +1,3 @@
-# from localdse.explorer.single_query import run_query
 import pickle
 import pickle5
 import redis
@@ -6,17 +5,15 @@ from os.path import join, dirname, basename, exists
 import os
 import argparse
 from glob import iglob
-import json
 from copy import deepcopy
-import shutil
 
 from utils import get_ts, create_dir_if_not_exists, get_src_path, get_host
 import time
-from subprocess import Popen, DEVNULL, PIPE
+from subprocess import Popen, PIPE
 from result import Result
 
-model_tag = 'post-gnn-3lp-3lm' # 'DAC22-dse' # 
-VER = 'v18_class' # 'v20_freeze1'
+model_tag = 'pragma_as_MLP'
+VER = 'v20' 
 class MyTimer():
     def __init__(self) -> None:
         self.start = time.time()
@@ -32,7 +29,7 @@ class Saver():
         self.logdir = join(
             get_src_path(),
             'logs',
-            f'iccad/{model_tag}/{VER}/dse_results', f'{kernel}_{get_ts()}')
+            f'{VER}/hls_results', f'{kernel}_{get_ts()}')
         create_dir_if_not_exists(self.logdir)
         self.timer = MyTimer()
         print('Logging to {}'.format(self.logdir))
@@ -170,10 +167,7 @@ def run_procs(saver, procs, database, kernel, f_db_new, result_summary, server=N
                     saver.debug(text)
                     saver.debug('############################')
 
-                    if server is not None and ('u22' not in server):
-                        q_result = pickle.load(open(f'localdse/kernel_results/{kernel}_{idx}_{server}.pickle', 'rb'))
-                    else:
-                        q_result = pickle.load(open(f'localdse/kernel_results/{kernel}_{idx}.pickle', 'rb'))
+                    q_result = pickle.load(open(f'localdse/kernel_results/{kernel}_{idx}_{server}.pickle', 'rb'))
 
                     for _key, result in q_result.items():
                         pickled_result = pickle.dumps(result)
@@ -198,11 +192,14 @@ if __name__ == '__main__':
     saver = Saver(args.kernel)
     CHECK_EARLY_REJECT = False
 
+    os.makedirs('./localdse/kernel_results/', exist_ok=True)
+    ## update makefile path
+    p = Popen(f"cd ../dse_database/merlin_prj \n python3 create_prj.py", shell = True, stdout=PIPE)
     src_dir = join(args.root_dir, 'dse_database/merlin_prj', f'{args.kernel}', 'xilinx_dse')
-    work_dir = join('/expr', f'{args.kernel}', 'work_dir')
+    work_dir = join('logs/expr', f'{args.kernel}', 'work_dir')
     f_config = join(args.root_dir, 'dse_database', args.benchmark, 'config', f'{args.kernel}_ds_config.json')
-    f_pickle_path = join(args.root_dir, 'src/logs/iccad/', '**') 
-    f_pickle_list = [f for f in iglob(f_pickle_path, recursive=True) if f.endswith('.pickle') and f'{args.kernel}.' in f and model_tag in f and args.version in f and VER in f] 
+    f_pickle_path = join(args.root_dir, 'src/logs/', '**/*') 
+    f_pickle_list = [f for f in iglob(f_pickle_path, recursive=True) if f.endswith('.pickle') and f'{args.kernel}.' in f and args.version in f] 
     print(f_pickle_list, f_pickle_path)
     assert len(f_pickle_list) == 1
     f_pickle = f_pickle_list[0]
@@ -213,7 +210,7 @@ if __name__ == '__main__':
 
     found_db = False
     if args.version == 'v18' or args.version == 'v20':
-        f_db_list = [f for f in iglob(db_p, recursive=True) if f.endswith('.db') and f'{args.kernel}_' in f and args.version in f]
+        f_db_list = [f for f in iglob(db_dir, recursive=True) if f.endswith('.db') and f'{args.kernel}_' in f and args.version in f]
     else:
         raise NotImplementedError()
     if len(f_db_list) == 1:
@@ -353,7 +350,9 @@ if __name__ == '__main__':
             env, docker, time_ = 'vitis_env', 'vitis_docker', ''
         else:
             raise NotImplementedError()
-        p = Popen(f"cd {get_src_path()} \n source {share}/{env}.sh \n /expr/merlin_docker/{docker}-run-gnn.sh {time_} python3.6 -m autodse.explorer.single_query --src-dir {src_dir} --work-dir {new_work_dir} --kernel {kernel} --config {f_config} --id {batch_id} --server {args.server} --timeout 160", shell = True, stdout=PIPE)
+        
+        ### UPDATE ME: update this line by how you run the Merlin compiler
+        p = Popen(f"cd {get_src_path()} \n source {share}/{env}.sh \n /expr/merlin_docker/{docker}-run-gnn.sh {time_} python3 -m autodse.explorer.single_query --src-dir {src_dir} --work-dir {new_work_dir} --kernel {kernel} --config {f_config} --id {batch_id} --server {args.server} --timeout 160", shell = True, stdout=PIPE)
         
         procs.append([batch_id, key, p])
         saver.info(f'Added {point_} with batch id {batch_id}')

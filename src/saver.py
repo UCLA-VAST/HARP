@@ -24,7 +24,8 @@ class MyTimer():
 class Saver(object):
     def __init__(self):
         model_str = self._get_model_str()
-        self.logdir = join(get_src_path(), 'logs', f'dse_results_v20-{FLAGS.v2_db}_{get_ts()}')
+        directory_name = f'dse_results_v20_{get_ts()}' if FLAGS.v2_db else f'dse_results_v18_{get_ts()}'
+        self.logdir = join(get_src_path(), 'logs', directory_name)
         create_dir_if_not_exists(self.logdir)
         self.new_sub_saver()
         self._save_conf_code()

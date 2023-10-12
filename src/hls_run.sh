@@ -9,5 +9,5 @@ echo $HOSTNAME
 
 for kernel in  ${kernels[@]}  
 do
-    python3 parallel_run_tool_dse.py --version 'v20' --kernel $kernel --benchmark $benchmark --root-dir ../ --redis-port "7777" --server $HOSTNAME
+    python3 parallel_run_tool_dse.py --version 'v20' --kernel $kernel --benchmark $benchmark --root-dir ../ --redis-port "6379" --server $HOSTNAME
 done
