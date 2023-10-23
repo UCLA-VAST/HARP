@@ -18,7 +18,7 @@ import pickle5 as pickle
 import numpy as np
 from collections import Counter, defaultdict, OrderedDict
 
-from scipy.sparse import hstack, coo_matrix
+from scipy.sparse import hstack, coo_matrix, csr_matrix
 
 from tqdm import tqdm
 
@@ -910,6 +910,9 @@ def _encode_edge_torch(edge_dict, enc_ftype, enc_ptype):
         X = hstack((X_ftype, X_ptype))
     else:
         X = coo_matrix(X_ftype)
+    if isinstance(X, csr_matrix):
+        # Convert CSR to COO
+        X = X.tocoo()
     X = _coo_to_sparse(X)
     X = X.to_dense()
 
