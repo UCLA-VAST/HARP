@@ -2,7 +2,7 @@
 
 ## Publication
 
-+ Atefeh Sohrabizadeh, Yunsheng Bai, Yizhou Sun, Jason Cong. [Robust GNN-based Representation Learning for HLS](https://web.cs.ucla.edu/~atefehsz/publication/_ICCAD_23__HARP.pdf). In ICCAD, 2023.
++ Atefeh Sohrabizadeh, Yunsheng Bai, Yizhou Sun, Jason Cong. [Robust GNN-based Representation Learning for HLS](https://ieeexplore.ieee.org/document/10323853). In ICCAD, 2023.
 
 ## About
 This repo contains the codes for building HARP, an automated framework to be trained to act as the surrogate of the HLS tool. It can be used to expedite the design optimization process. The database used in this repo is built using the AMD/Xilinx HLS tools, but can be replaced by other databases. 
