@@ -113,9 +113,11 @@ def add_if_not_exists_or_now_valid(database, new_database, len_pragma = 0):
     else: 
         if VER == 'v18': database.hset(0, 'setup', pickle.dumps({'tool_version': 'SDx-18.3'}))
         elif VER == 'v20': database.hset(0, 'setup', pickle.dumps({'tool_version': 'Vitis-20.2'}))
+        elif VER == 'v21': database.hset(0, 'setup', pickle.dumps({'tool_version': 'Vitis-21.1'}))
     if setup:
         if VER == 'v18': assert obj_tool['tool_version']== 'SDx-18.3'
         elif VER == 'v20': assert obj_tool['tool_version']== 'Vitis-20.2'
+        elif VER == 'v21': assert obj_tool['tool_version']== 'Vitis-21.1'
         else: raise NotImplementedError()
 
 
@@ -133,13 +135,13 @@ def read_db(database, db_files):
         f_db = open(file, 'rb')
         data = pickle.load(f_db)
         if idx == 0:
-            database.hmset(0, data)
+            database.hset(0, mapping=data)
             keys = [k.decode('utf-8') for k in database.hkeys(idx) if 'lv2' in k.decode('utf-8')]
             obj = pickle.loads(database.hget(idx, keys[0]))
             len_pragma = len(obj.point)
         else:
             new_database = init_db(port=7777)
-            new_database.hmset(0, data)
+            new_database.hset(0, mapping=data)
             add_if_not_exists_or_now_valid(database, new_database, len_pragma)
         f_db.close()
             
@@ -216,7 +218,7 @@ if __name__ == '__main__':
     # load the database and get the keys
     # the key for each entry shows the value of each of the pragmas in the source file
     data = pickle.load(f_db)
-    database.hmset(0, data)
+    database.hset(0, mapping=data)
     keys = [k.decode('utf-8') for k in database.hkeys(0)]
     # get a value of a specific key (key i)
     i = 6

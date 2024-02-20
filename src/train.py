@@ -110,13 +110,13 @@ def feature_extract(model, key_word, gnn_layer=None):
         if key_word not in name:
             if not gnn_layer:
                 saver.log_info(f'fixing parameter: {name}')
-                param.requires_grad = False
+                param.requires_grad = False  ## freezes that parameter so it will not be updated in the backpropagation
             else:
                 if 'conv_first' in name or any([f'conv_layers.{d}' in name for d in range(gnn_layer-1)]):
                     saver.log_info(f'fixing parameter: {name}')
                     param.requires_grad = False
     
-    if FLAGS.random_MLP:
+    if FLAGS.random_MLP: ## sample code for modifying part of the model architecture
         D = FLAGS.D
         if D > 64:
             hidden_channels = [D // 2, D // 4, D // 8, D // 16, D // 32]

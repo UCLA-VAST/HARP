@@ -335,7 +335,7 @@ def get_data_list():
         for idx, file in enumerate(db_paths):
             f_db = open(file, 'rb')
             data = pickle.load(f_db)
-            database.hmset(0, data)
+            database.hset(0, mapping=data)
             max_idx = idx + 1
             f_db.close()
         keys = [k.decode('utf-8') for k in database.hkeys(0)]

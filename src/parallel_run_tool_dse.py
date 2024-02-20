@@ -209,7 +209,7 @@ if __name__ == '__main__':
     create_dir_if_not_exists(work_dir)
 
     found_db = False
-    if args.version == 'v18' or args.version == 'v20':
+    if args.version in ['v18', 'v20', 'v21']:
         f_db_list = [f for f in iglob(db_dir, recursive=True) if f.endswith('.db') and f'{args.kernel}_' in f and args.version in f]
     else:
         raise NotImplementedError()
@@ -226,7 +226,7 @@ if __name__ == '__main__':
     try:
         file_db = open(f_db, 'rb')
         data = pickle.load(file_db)
-        database.hmset(0, data)
+        database.hset(0, mapping=data)
     except:
         f_db_new = f'{args.kernel}_result_updated.db'
         saver.info('No prior databases')
@@ -246,6 +246,9 @@ if __name__ == '__main__':
     elif args.version == 'v20':
         database.hset(0, 'setup', pickle.dumps({'tool_version': 'Vitis-20.2'}))
         database.hset(1, 'setup', pickle.dumps({'tool_version': 'Vitis-20.2'}))
+    elif args.version == 'v21':
+        database.hset(0, 'setup', pickle.dumps({'tool_version': 'Vitis-21.1'}))
+        database.hset(1, 'setup', pickle.dumps({'tool_version': 'Vitis-21.1'}))
     else:
         raise NotImplementedError()
         
@@ -346,7 +349,7 @@ if __name__ == '__main__':
         new_work_dir = join(work_dir, f'batch_id_{batch_id}')
         if args.version == 'v18':
             env, docker, time_ = 'env', 'docker', "faketime -f '-2y'"
-        elif args.version == 'v20':
+        elif args.version == 'v20' or args.version == 'v21':
             env, docker, time_ = 'vitis_env', 'vitis_docker', ''
         else:
             raise NotImplementedError()

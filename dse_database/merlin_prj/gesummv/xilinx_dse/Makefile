@@ -31,5 +31,5 @@ KERNEL_INC_DIR=$(CXX_INC_DIRS)
 CMP_OPT=-d11
 LNK_OPT=-d11
 
-MCC_COMMON_DIR=/home/atefehSZ/HARP/dse_database/merlin_prj/mcc_common
+MCC_COMMON_DIR=/home/atefeh/HARP/dse_database/merlin_prj/mcc_common
 include $(MCC_COMMON_DIR)/mcc_common.mk
