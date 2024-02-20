@@ -321,8 +321,7 @@ class Explorer():
 
         
         if FLAGS.separate_T:
-            if FLAGS.v2_db: pragma_dim = load(join(dirname(FLAGS.encoder_path), 'v20_pragma_dim'))
-            else: pragma_dim = load(join(dirname(FLAGS.encoder_path), 'v18_pragma_dim'))
+            pragma_dim = load(join(dirname(FLAGS.encoder_path), f'{FLAGS.v_db}_pragma_dim'))
             for gname in pragma_dim:
                 self.max_pragma_length = pragma_dim[gname][1] ## it's a list of [#pragma per kernel, max #pragma for all kernels]
                 break

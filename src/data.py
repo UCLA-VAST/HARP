@@ -35,10 +35,7 @@ import math
 NON_OPT_PRAGMAS = ['LOOP_TRIPCOUNT', 'INTERFACE', 'INTERFACE', 'KERNEL']
 WITH_VAR_PRAGMAS = ['DEPENDENCE', 'RESOURCE', 'STREAM', 'ARRAY_PARTITION']
 TARGET = ['perf', 'util-DSP', 'util-BRAM', 'util-LUT', 'util-FF']
-if FLAGS.v2_db:
-    SAVE_DIR = join(get_save_path(), FLAGS.dataset, f'v2-transfer-MLP-{FLAGS.pragma_as_MLP}-{FLAGS.graph_type}-{FLAGS.task}_edge-position-{FLAGS.encode_edge_position}_norm_with-invalid_{FLAGS.invalid}-normalization_{FLAGS.norm_method}_tag_{FLAGS.tag}_{"".join(TARGET)}')
-else:
-    SAVE_DIR = join(get_save_path(), FLAGS.dataset,  f'MLP-{FLAGS.pragma_as_MLP}-{FLAGS.graph_type}-{FLAGS.task}_edge-position-{FLAGS.encode_edge_position}_norm_with-invalid_{FLAGS.invalid}-normalization_{FLAGS.norm_method}_tag_{FLAGS.tag}_{"".join(TARGET)}')
+SAVE_DIR = join(get_save_path(), FLAGS.dataset,  f'{FLAGS.v_db}_MLP-{FLAGS.pragma_as_MLP}-{FLAGS.graph_type}-{FLAGS.task}_edge-position-{FLAGS.encode_edge_position}_norm_with-invalid_{FLAGS.invalid}-normalization_{FLAGS.norm_method}_tag_{FLAGS.tag}_{"".join(TARGET)}')
        
 
 ENCODER_PATH = join(SAVE_DIR, 'encoders')
@@ -315,10 +312,7 @@ def get_data_list():
         if FLAGS.dataset == 'harp':
             db_paths = []
             for db_p in db_path:
-                if FLAGS.v2_db:
-                    VER = 'v20'
-                else:
-                    VER = 'v18'    
+                VER = v_db  
                 paths = [f for f in iglob(db_p, recursive=True) if f.endswith('.db') and n in f and VER in f]
                 db_paths.extend(paths)
             if db_paths is None:

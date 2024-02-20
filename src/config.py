@@ -57,8 +57,8 @@ parser.add_argument('--new_speedup', default=True) # new_speedup: same reference
 parser.add_argument('--invalid', type = bool, default=False ) # False: do not include invalid designs
 
 parser.add_argument('--encode_log', type = bool, default=False)
-v2_db = True # True: v20 database, False: v18 database
-parser.add_argument('--v2_db', default=v2_db) # if set to true uses the db of the new version of the tool: 2020.2
+v_db = 'v21' # 'v20': v20 database, 'v18': v18 database
+parser.add_argument('--v_db', default=v_db) # if set to true uses the db of the new version of the tool: 2020.2
 
 test_kernels = None
 parser.add_argument('--test_kernels', default=test_kernels)
@@ -187,7 +187,7 @@ model_path_list = []
 use_pretrain = True 
 if use_pretrain:
     base_path = 'models'    
-    keyword =  'v20' if v2_db else 'v18'
+    keyword =  v_db
     includes = [keyword, model_ver, 'regression']
     excludes = ['class']
     model_base_path = join(get_root_path(), base_path, '**/*')
@@ -207,7 +207,7 @@ parser.add_argument('--ensemble', type=int, default=ensemble)
 parser.add_argument('--ensemble_weights', default=ensemble_weights)
 class_model_path = None
 if SUBTASK == 'dse':
-    keyword =  'v20' if v2_db else 'v18'
+    keyword =  v_db
     includes = [keyword, model_ver, 'class']
     model = [f for f in iglob(model_base_path, recursive=True) if f.endswith('.pth') and all(k in f for k in includes)]
     assert len(model) == 1
@@ -250,7 +250,7 @@ loss = 'MSE' # RMSE, MSE,
 parser.add_argument('--loss', type=str, default=loss) 
 
 if model_path == None:
-    if TASK == 'regression' and v2_db == False:
+    if TASK == 'regression':
         epoch_num = 1500
     else:
         epoch_num = 200
