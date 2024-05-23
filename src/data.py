@@ -312,7 +312,7 @@ def get_data_list():
         if FLAGS.dataset == 'harp':
             db_paths = []
             for db_p in db_path:
-                VER = v_db  
+                VER = FLAGS.v_db  
                 paths = [f for f in iglob(db_p, recursive=True) if f.endswith('.db') and n in f and VER in f]
                 db_paths.extend(paths)
             if db_paths is None:
